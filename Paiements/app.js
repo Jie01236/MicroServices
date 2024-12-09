@@ -1,6 +1,7 @@
 require('dotenv').config();
 const fastify = require('fastify')({ logger: true });
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const amqplib = require('amqplib');
 const sqlite3 = require('sqlite3').verbose();
 const db = new sqlite3.Database('./payments.db'); // Chemin vers le fichier SQLite
 
@@ -44,6 +45,33 @@ async function savePaymentToDB(paymentIntent) {
   });
 }
 
+let channel; // Déclaration du canal RabbitMQ
+
+async function connectRabbitMQ() {
+  const connection = await amqplib.connect('amqp://localhost');
+  channel = await connection.createChannel();
+  await channel.assertExchange('payments_exchange', 'fanout', { durable: true });
+  console.log('Connecté à RabbitMQ');
+}
+  // Fonction pour envoyer un événement dans RabbitMQ
+async function sendPaymentEvent(paymentIntent) {
+  const message = {
+    paymentIntentId: paymentIntent.id,
+    amount: paymentIntent.amount,
+    currency: paymentIntent.currency,
+    status: paymentIntent.status,
+  };
+
+  channel.publish(
+    'payments_exchange',
+    '',
+    Buffer.from(JSON.stringify(message))
+  );
+
+  console.log('Événement envoyé dans RabbitMQ :', message);
+}
+
+
 // Route principale
 fastify.get('/', async (request, reply) => {
     reply.send({ message: 'API de Paiements - Projet d\'école' });
@@ -72,6 +100,7 @@ fastify.post('/api/payment', async (request, reply) => {
     // Sauvegarder dans la base SQLite seulement si le paiement est réussi
     if (paymentIntent.status === 'succeeded') {
       await savePaymentToDB(paymentIntent);
+      sendPaymentEvent(paymentIntent);  // Envoie un événement après succès
     }
 
     reply.send({
@@ -124,11 +153,13 @@ fastify.get('/api/payment-status/:paymentIntentId', async (request, reply) => {
       reply.status(500).send({ error: error.message });
     }
   });
-  
+
+
 
 // Lancer le serveur
 const start = async () => {
   try {
+    await connectRabbitMQ(); // Connexion à RabbitMQ
     await fastify.listen({ port: 3000 });
     console.log('API en cours d\'exécution sur http://localhost:3000');
   } catch (err) {

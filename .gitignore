@@ -3,3 +3,4 @@
 *.sqlite3
 *.log
 /dist
+package-lock.json

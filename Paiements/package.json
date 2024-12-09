@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "@fastify/formbody": "^8.0.1",
+    "amqplib": "^0.10.5",
     "dotenv": "^16.4.7",
     "fastify": "^5.1.0",
     "sqlite3": "^5.1.7",
