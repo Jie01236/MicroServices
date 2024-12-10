@@ -1,5 +1,6 @@
 from flask import request, jsonify
 from models import Reservation, db  
+from rabbitmq import publish_event
 
 def register_routes(app):
     @app.route("/reservations", methods=["POST"])
@@ -25,8 +26,21 @@ def register_routes(app):
         )
         db.session.add(new_reservation)
         db.session.commit()
-        return jsonify({"message": "Reservation created", "reservation_id": new_reservation.id}), 201
+        
+        # Publier un événement dans RabbitMQ
+        publish_event("reservation_created", {
+            "reservation_id": new_reservation.id,
+            "user_id": new_reservation.user_id,
+            "property_id": new_reservation.property_id,
+            "check_in": new_reservation.check_in,
+            "check_out": new_reservation.check_out,
+            "guests": new_reservation.guests,
+            "total_price": new_reservation.total_price,
+            "status": "confirmed"
+        })
 
+        return jsonify({"message": "Reservation created", "reservation_id": new_reservation.id}), 201
+    
     @app.route("/reservations", methods=["GET"])
     def get_reservations():
         user_id = request.args.get("user_id")
@@ -50,4 +64,12 @@ def register_routes(app):
         reservation = Reservation.query.get_or_404(reservation_id)
         reservation.status = "cancelled"
         db.session.commit()
+
+        # Publier un événement dans RabbitMQ
+        publish_event("reservation_cancelled", {
+            "reservation_id": reservation.id,
+            "user_id": reservation.user_id,
+            "status": "cancelled"
+        })
+
         return jsonify({"message": "Reservation cancelled", "reservation_id": reservation.id}), 200
