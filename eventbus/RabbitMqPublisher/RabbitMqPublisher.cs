@@ -35,9 +35,9 @@ namespace MessagingBus.RabbitMqPublisher
 
             var props = new BasicProperties();
             props.ContentType = "application/json"; // Indicates the content type
-            props.DeliveryMode = 2;
+            props.DeliveryMode = DeliveryModes.Persistent;
 
-            await Task.Run(() => channel.BasicPublishAsync(exchange: string.Empty, routingKey: queueName, body: body, basicProperties: props, mandatory: true);
+            await Task.Run(() => channel.BasicPublishAsync(exchange: string.Empty, routingKey: queueName, body: body, basicProperties: props, mandatory: true));
 
 
         }
