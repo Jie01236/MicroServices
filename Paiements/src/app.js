@@ -1,9 +1,10 @@
 require('dotenv').config();
 const fastify = require('fastify')({ logger: true });
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const stripe = require('stripe')(`../${process.env.STRIPE_SECRET_KEY}`);
 const amqplib = require('amqplib');
 const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database('./payments.db'); // Chemin vers le fichier SQLite
+// const sendPaymentEvent = require('sendPaymentEvent');
+const db = new sqlite3.Database('../db/payments.db'); // Chemin vers le fichier SQLite
 
 // Middleware pour analyser les requêtes JSON
 fastify.register(require('@fastify/formbody'));
@@ -53,23 +54,7 @@ async function connectRabbitMQ() {
   await channel.assertExchange('payments_exchange', 'fanout', { durable: true });
   console.log('Connecté à RabbitMQ');
 }
-  // Fonction pour envoyer un événement dans RabbitMQ
-async function sendPaymentEvent(paymentIntent) {
-  const message = {
-    paymentIntentId: paymentIntent.id,
-    amount: paymentIntent.amount,
-    currency: paymentIntent.currency,
-    status: paymentIntent.status,
-  };
 
-  channel.publish(
-    'payments_exchange',
-    '',
-    Buffer.from(JSON.stringify(message))
-  );
-
-  console.log('Événement envoyé dans RabbitMQ :', message);
-}
 
 
 // Route principale
@@ -100,7 +85,7 @@ fastify.post('/api/payment', async (request, reply) => {
     // Sauvegarder dans la base SQLite seulement si le paiement est réussi
     if (paymentIntent.status === 'succeeded') {
       await savePaymentToDB(paymentIntent);
-      sendPaymentEvent(paymentIntent);  // Envoie un événement après succès
+      sendPaymentEvent.sendPaymentEvent(paymentIntent);  // Envoie un événement après succès
     }
 
     reply.send({
@@ -110,6 +95,7 @@ fastify.post('/api/payment', async (request, reply) => {
     });
   } catch (error) {
     fastify.log.error(error);
+    // sendPaymentEvent.sendPaymentEvent(paymentIntent);
     reply.status(500).send({ error: error.message });
   }
 });
@@ -159,7 +145,7 @@ fastify.get('/api/payment-status/:paymentIntentId', async (request, reply) => {
 // Lancer le serveur
 const start = async () => {
   try {
-    await connectRabbitMQ(); // Connexion à RabbitMQ
+    // await connectRabbitMQ(); // Connexion à RabbitMQ
     await fastify.listen({ port: 3000 });
     console.log('API en cours d\'exécution sur http://localhost:3000');
   } catch (err) {
