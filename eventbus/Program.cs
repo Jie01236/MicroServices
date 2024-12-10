@@ -14,5 +14,9 @@ builder.Services.AddScoped(typeof(IRabbitMqPublisher<>), typeof(RabbitMqPublishe
 
 var app = builder.Build();
 
+app.MapGet("/", () =>
+{
+    return "hello from Messaging bus";
+});
 
 app.Run();
