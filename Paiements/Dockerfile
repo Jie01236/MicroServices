@@ -16,4 +16,6 @@ COPY --chown=node:node . .
 
 EXPOSE 3000
 
+WORKDIR /home/node/app/src
+
 CMD [ "node", "app.js", "--delimiter", ";" ]
