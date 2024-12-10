@@ -4,3 +4,10 @@
 *.log
 /dist
 package-lock.json
+/apigateway/.vs/*
+/apigateway/bin/*
+/apigateway/obj/*
+/eventbus/obj/*
+/eventbus/.vs/*
+/eventbus/bin/*
+/apigateway/gitignore
