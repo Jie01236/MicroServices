@@ -1,6 +1,7 @@
 import pika
 import json
 
+
 # Connection parameters
 connection_params = pika.ConnectionParameters(
         host='localhost',  # RabbitMQ server address
@@ -11,6 +12,7 @@ connection_params = pika.ConnectionParameters(
 
 # Connexion à RabbitMQ
 connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+ main
 channel = connection.channel()
 
 # Déclaration de l'échange pour les événements de réservation
