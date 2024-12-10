@@ -1,0 +1,19 @@
+services:
+
+  paiements:
+    image: ibbraba/paiements
+    ports:
+      - 3000:3000
+  
+
+  eventbus :
+    image: ibbraba/eventbus
+    ports : 
+      - 5000:5000
+    
+  
+  apigateway : 
+    image :  ibbraba/apigateway 
+    ports : 
+      - 9000:9000
+    
