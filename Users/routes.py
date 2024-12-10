@@ -1,6 +1,8 @@
 from flask import request, jsonify
 from auth import hash_password, authenticate_user, generate_token
 from models import User, db
+from messaging import publish_message 
+
 
 def register_routes(app):
 
@@ -23,6 +25,10 @@ def register_routes(app):
         new_user = User(username=data["username"], email=data["email"], hashed_password=hashed_password)
         db.session.add(new_user)
         db.session.commit()
+
+        # Publier un message dans RabbitMQ
+        publish_message("user_notifications", f"New user registered: {data['email']}")
+
         return jsonify({"message": "User registered successfully", "user_id": new_user.id}), 201
 
     @app.route("/login", methods=["POST"])
