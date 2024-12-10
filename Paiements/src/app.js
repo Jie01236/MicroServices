@@ -1,6 +1,7 @@
-require('dotenv').config();
+require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
 const fastify = require('fastify')({ logger: true });
-const stripe = require('stripe')(`../${process.env.STRIPE_SECRET_KEY}`);
+console.log('Stripe Secret Key:', process.env.STRIPE_SECRET_KEY);
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const amqplib = require('amqplib');
 const sqlite3 = require('sqlite3').verbose();
 // const sendPaymentEvent = require('sendPaymentEvent');
@@ -14,6 +15,7 @@ db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS payments (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
       payment_intent_id TEXT NOT NULL,
       amount INTEGER NOT NULL,
       currency TEXT NOT NULL,
@@ -27,12 +29,13 @@ db.serialize(() => {
 async function savePaymentToDB(paymentIntent) {
   return new Promise((resolve, reject) => {
     const stmt = db.prepare(`
-      INSERT INTO payments (payment_intent_id, amount, currency, status) 
+      INSERT INTO payments (payment_intent_id, user_id, amount, currency, status) 
       VALUES (?, ?, ?, ?)
     `);
 
     stmt.run(
       paymentIntent.id,
+      paymentIntent.user_id,
       paymentIntent.amount,
       paymentIntent.currency,
       paymentIntent.status,
@@ -64,10 +67,10 @@ fastify.get('/', async (request, reply) => {
 
 // Route pour créer un paiement
 fastify.post('/api/payment', async (request, reply) => {
-  const { amount, currency, paymentMethodId } = request.body;
+  const { amount, currency, paymentMethodId, user_id } = request.body;
 
-  if (!amount || !currency || !paymentMethodId) {
-    return reply.status(400).send({ error: 'Veuillez fournir amount, currency, et paymentMethodId' });
+  if (!amount || !currency || !paymentMethodId || user_id) {
+    return reply.status(400).send({ error: 'Veuillez fournir user_id, amount, currency, et paymentMethodId' });
   }
 
   try {
@@ -85,7 +88,7 @@ fastify.post('/api/payment', async (request, reply) => {
     // Sauvegarder dans la base SQLite seulement si le paiement est réussi
     if (paymentIntent.status === 'succeeded') {
       await savePaymentToDB(paymentIntent);
-      sendPaymentEvent.sendPaymentEvent(paymentIntent);  // Envoie un événement après succès
+      // sendPaymentEvent.sendPaymentEvent(paymentIntent);  // Envoie un événement après succès
     }
 
     reply.send({
