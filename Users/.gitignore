@@ -1,0 +1,30 @@
+# Exclure la base de données SQLite
+users.db
+*.db
+
+# Environnement virtuel Python
+venv/
+
+# Fichiers temporaires Python
+*.pyc
+*.pyo
+__pycache__/
+
+# Fichiers de logs
+*.log
+
+# Fichiers temporaires
+*.tmp
+*.bak
+
+# Configuration sensible
+.env
+instance/
+
+# Dossiers spécifiques à votre IDE/éditeur
+.vscode/
+.idea/
+
+# Fichiers spécifiques au système d'exploitation
+.DS_Store
+Thumbs.db
