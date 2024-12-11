@@ -2,18 +2,25 @@ services:
 
   paiements:
     image: ibbraba/paiements
-    ports:
+    ports :
       - 3000:3000
-  
+    network_mode: "host"
+
 
   eventbus :
     image: ibbraba/eventbus
-    ports : 
+    expose :
       - 5000:5000
-    
-  
-  apigateway : 
-    image :  ibbraba/apigateway 
-    ports : 
+    network_mode: "host"
+
+  apigateway :
+    image :  ibbraba/apigateway
+    ports :
       - 9000:9000
-    
+    network_mode: "host"
+
+  reservations : 
+    image : ibbraba/reservations
+    ports : 
+      - 8000:8000
+    network_mode: "host"
