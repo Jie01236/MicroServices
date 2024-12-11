@@ -7,5 +7,9 @@ var app = builder.Build();
 
 app.MapReverseProxy();
 
+app.MapGet("/", () =>
+{
+    return "Hello from gateway";
+});
 
 app.Run();
