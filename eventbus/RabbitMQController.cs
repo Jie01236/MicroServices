@@ -23,6 +23,8 @@ namespace MessagingBus
             var body = Encoding.UTF8.GetBytes(message.Message);
             await channel.BasicPublishAsync(exchange: "", routingKey: queueName, body: body);
 
+            Console.WriteLine("RabbiMQController : New message published");
+
             return Ok(Task.CompletedTask);
         }
     }
